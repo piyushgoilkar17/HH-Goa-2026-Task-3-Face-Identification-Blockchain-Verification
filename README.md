@@ -70,6 +70,41 @@ face-verify-chain/
 
 ## How to Run
 
+### Quick start (exact terminal commands, in order)
+
+```bash
+# 1. Get the code
+git clone <repo-url> face-verify-chain
+cd face-verify-chain
+
+# 2. Create a virtual environment
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Set up your API keys
+cp .env.example .env
+# now open .env and paste your real SERPAPI_KEY / IMGBB_KEY
+# (see "Add your API keys" below for where to get them and where
+#  to add CHAIN_RPC_URL / CHAIN_PRIVATE_KEY for on-chain anchoring)
+
+# 5. Get a test image
+python samples/generate_sample.py
+# or use your own: skip this and point the next commands at your file instead
+
+# 6. Sanity check — face detection only, no API keys or chain needed
+python main.py samples/sample_face.jpg --dry-run
+
+# 7. Full pipeline: detect → search → hash → anchor on-chain → verify
+python main.py samples/sample_face.jpg
+```
+
+Step 7 prints a `✅ VERIFIED` block at the end with a transaction hash — paste that into `https://amoy.polygonscan.com/tx/<hash>` (if anchored on Amoy) to see the public, independently-verifiable proof.
+
+The subsections below cover each step in more depth (which keys to use, chain options, all CLI flags).
+
 ### 1. Clone & create a virtual environment
 
 ```bash

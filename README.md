@@ -204,29 +204,12 @@ python tests/test_hasher.py
 
 ```mermaid
 flowchart TD
-    A["Input image\n(face scan)"] --> B["face_id/detect.py\nDeepFace + MTCNN"]
-    B --> C["128-d face encoding\n+ cropped face (base64)"]
-
-    C --> D["search/reverse_search.py\nupload crop to imgbb"]
-    D --> E["imgbb\npublic temp URL"]
-    E --> F["SerpAPI\nGoogle Reverse Image Search"]
-    F --> G["Ranked matches\n(source URL, title, snippet, confidence)"]
-
-    C --> H
-    G --> H["match_record.json\nface data + search results"]
-
-    H --> I["chain/hasher.py\ncanonical SHA-256 fingerprint"]
-    I --> J{"chain/anchor.py\nANCHOR_MODE"}
-    J -->|calldata| K["tx to burn address\ndata = FVCR: + hash"]
-    J -->|contract| L["FaceVerifyChain.sol\nanchor(bytes32)"]
-    K --> M[("EVM chain\nPolygon Amoy testnet\nor local Ganache")]
-    L --> M
-
-    M --> N["chain/verify.py\nrecompute hash, re-query chain"]
-    N --> O{"Result"}
-    O -->|hash found, matches| P["VERIFIED"]
-    O -->|hash found under different record| Q["TAMPERED"]
-    O -->|hash not found| R["NOT_FOUND"]
+    A["Face scan image"] --> B["Face detection\n+ 128-d encoding"]
+    B --> C["Reverse image search\nimgbb + SerpAPI"]
+    C --> D["match_record.json"]
+    D --> E["SHA-256 hash"]
+    E --> F[("Anchor on chain\nPolygon Amoy / Ganache")]
+    F --> G["Verify:\nVERIFIED / TAMPERED / NOT_FOUND"]
 ```
 
 Two independent trust boundaries meet at the hash: the **search step** proves *what* was found on the web (a real, live-queried post), and the **chain step** proves *that record hasn't changed since* — anyone holding `match_record.json` plus the tx hash can independently recompute the SHA-256 and check it against the public chain, without trusting this codebase at all.

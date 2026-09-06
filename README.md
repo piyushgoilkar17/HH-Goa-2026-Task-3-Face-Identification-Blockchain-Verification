@@ -68,7 +68,7 @@ face-verify-chain/
 
 ---
 
-## Setup
+## How to Run
 
 ### 1. Clone & create a virtual environment
 
@@ -121,9 +121,7 @@ python samples/generate_sample.py
 # or supply your own: python main.py path/to/your_photo.jpg
 ```
 
----
-
-## Usage
+### 5. Run the pipeline
 
 ```bash
 # Full pipeline: detect → search → hash → anchor → verify

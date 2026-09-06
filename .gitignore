@@ -1,0 +1,29 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Output records (uncomment if you want to track them in git)
+match_record.json
+results/
+
+# Sample images (usually large; don't commit them)
+samples/*.jpg
+samples/*.jpeg
+samples/*.png
+
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/

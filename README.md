@@ -23,6 +23,39 @@ Every run appends a record to `match_record.json` with the face data, the search
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart TD
+    A["Input image\n(face scan)"] --> B["face_id/detect.py\nDeepFace + MTCNN"]
+    B --> C["128-d face encoding\n+ cropped face (base64)"]
+
+    C --> D["search/reverse_search.py\nupload crop to imgbb"]
+    D --> E["imgbb\npublic temp URL"]
+    E --> F["SerpAPI\nGoogle Reverse Image Search"]
+    F --> G["Ranked matches\n(source URL, title, snippet, confidence)"]
+
+    C --> H
+    G --> H["match_record.json\nface data + search results"]
+
+    H --> I["chain/hasher.py\ncanonical SHA-256 fingerprint"]
+    I --> J{"chain/anchor.py\nANCHOR_MODE"}
+    J -->|calldata| K["tx to burn address\ndata = FVCR: + hash"]
+    J -->|contract| L["FaceVerifyChain.sol\nanchor(bytes32)"]
+    K --> M[("EVM chain\nPolygon Amoy testnet\nor local Ganache")]
+    L --> M
+
+    M --> N["chain/verify.py\nrecompute hash, re-query chain"]
+    N --> O{"Result"}
+    O -->|hash found, matches| P["VERIFIED"]
+    O -->|hash found under different record| Q["TAMPERED"]
+    O -->|hash not found| R["NOT_FOUND"]
+```
+
+Two independent trust boundaries meet at the hash: the **search step** proves *what* was found on the web (a real, live-queried post), and the **chain step** proves *that record hasn't changed since* — anyone holding `match_record.json` plus the tx hash can independently recompute the SHA-256 and check it against the public chain, without trusting this codebase at all.
+
+---
+
 ## Which blockchain
 
 **Ethereum-compatible (EVM) chain via `web3.py`.** Configurable, no vendor lock-in — demonstrated on **Polygon Amoy** (public testnet), also runs against a local chain for offline dev:
@@ -169,7 +202,7 @@ Each run appends a record (JSON array). Example, abbreviated:
   "face_detection": { "num_faces_in_image": 1, "bounding_box": { "...": "..." }, "encoding_dim": 128 },
   "reverse_search": { "num_matches": 1, "matches": [ { "source_url": "https://...", "confidence_score": 1.0 } ] },
   "top_match": { "source_url": "https://...", "confidence_score": 1.0, "timestamp": "..." },
-  "chain_anchor": { "tx_hash": "0x...", "block_number": 123, "chain_backend": "ganache" },
+  "chain_anchor": { "tx_hash": "0x...", "block_number": 123, "chain_backend": "custom" },
   "chain_verify": { "status": "VERIFIED", "anchored_at_iso": "..." }
 }
 ```

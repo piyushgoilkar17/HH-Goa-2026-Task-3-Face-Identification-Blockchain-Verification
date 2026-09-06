@@ -20,6 +20,7 @@ results/
 samples/*.jpg
 samples/*.jpeg
 samples/*.png
+samples/*.webp
 
 # macOS
 .DS_Store

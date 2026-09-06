@@ -23,39 +23,6 @@ Every run appends a record to `match_record.json` with the face data, the search
 
 ---
 
-## Architecture
-
-```mermaid
-flowchart TD
-    A["Input image\n(face scan)"] --> B["face_id/detect.py\nDeepFace + MTCNN"]
-    B --> C["128-d face encoding\n+ cropped face (base64)"]
-
-    C --> D["search/reverse_search.py\nupload crop to imgbb"]
-    D --> E["imgbb\npublic temp URL"]
-    E --> F["SerpAPI\nGoogle Reverse Image Search"]
-    F --> G["Ranked matches\n(source URL, title, snippet, confidence)"]
-
-    C --> H
-    G --> H["match_record.json\nface data + search results"]
-
-    H --> I["chain/hasher.py\ncanonical SHA-256 fingerprint"]
-    I --> J{"chain/anchor.py\nANCHOR_MODE"}
-    J -->|calldata| K["tx to burn address\ndata = FVCR: + hash"]
-    J -->|contract| L["FaceVerifyChain.sol\nanchor(bytes32)"]
-    K --> M[("EVM chain\nPolygon Amoy testnet\nor local Ganache")]
-    L --> M
-
-    M --> N["chain/verify.py\nrecompute hash, re-query chain"]
-    N --> O{"Result"}
-    O -->|hash found, matches| P["VERIFIED"]
-    O -->|hash found under different record| Q["TAMPERED"]
-    O -->|hash not found| R["NOT_FOUND"]
-```
-
-Two independent trust boundaries meet at the hash: the **search step** proves *what* was found on the web (a real, live-queried post), and the **chain step** proves *that record hasn't changed since* — anyone holding `match_record.json` plus the tx hash can independently recompute the SHA-256 and check it against the public chain, without trusting this codebase at all.
-
----
-
 ## Which blockchain
 
 **Ethereum-compatible (EVM) chain via `web3.py`.** Configurable, no vendor lock-in — demonstrated on **Polygon Amoy** (public testnet), also runs against a local chain for offline dev:
@@ -230,3 +197,36 @@ python tests/test_hasher.py
 - **No liveness/anti-spoofing check** — a photo of a photo would be processed the same as a live capture.
 - **Ganache state is ephemeral** — restarting it wipes all anchored hashes; use Amoy (or another persistent chain) for anything you need to survive a restart or show as independently verifiable proof.
 - **Confidence scoring is a simple rank-based heuristic**, not a calibrated similarity score.
+
+---
+
+## Architecture
+
+```mermaid
+flowchart TD
+    A["Input image\n(face scan)"] --> B["face_id/detect.py\nDeepFace + MTCNN"]
+    B --> C["128-d face encoding\n+ cropped face (base64)"]
+
+    C --> D["search/reverse_search.py\nupload crop to imgbb"]
+    D --> E["imgbb\npublic temp URL"]
+    E --> F["SerpAPI\nGoogle Reverse Image Search"]
+    F --> G["Ranked matches\n(source URL, title, snippet, confidence)"]
+
+    C --> H
+    G --> H["match_record.json\nface data + search results"]
+
+    H --> I["chain/hasher.py\ncanonical SHA-256 fingerprint"]
+    I --> J{"chain/anchor.py\nANCHOR_MODE"}
+    J -->|calldata| K["tx to burn address\ndata = FVCR: + hash"]
+    J -->|contract| L["FaceVerifyChain.sol\nanchor(bytes32)"]
+    K --> M[("EVM chain\nPolygon Amoy testnet\nor local Ganache")]
+    L --> M
+
+    M --> N["chain/verify.py\nrecompute hash, re-query chain"]
+    N --> O{"Result"}
+    O -->|hash found, matches| P["VERIFIED"]
+    O -->|hash found under different record| Q["TAMPERED"]
+    O -->|hash not found| R["NOT_FOUND"]
+```
+
+Two independent trust boundaries meet at the hash: the **search step** proves *what* was found on the web (a real, live-queried post), and the **chain step** proves *that record hasn't changed since* — anyone holding `match_record.json` plus the tx hash can independently recompute the SHA-256 and check it against the public chain, without trusting this codebase at all.

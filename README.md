@@ -222,11 +222,7 @@ flowchart TD
     K --> M[("EVM chain\nPolygon Amoy testnet\nor local Ganache")]
     L --> M
 
-    M --> N["chain/verify.py\nrecompute hash, re-query chain"]
-    N --> O{"Result"}
-    O -->|hash found, matches| P["VERIFIED"]
-    O -->|hash found under different record| Q["TAMPERED"]
-    O -->|hash not found| R["NOT_FOUND"]
+    M --> N["chain/verify.py\nrecompute hash, re-query chain\n→ VERIFIED / TAMPERED / NOT_FOUND"]
 ```
 
 Two independent trust boundaries meet at the hash: the **search step** proves *what* was found on the web (a real, live-queried post), and the **chain step** proves *that record hasn't changed since* — anyone holding `match_record.json` plus the tx hash can independently recompute the SHA-256 and check it against the public chain, without trusting this codebase at all.
